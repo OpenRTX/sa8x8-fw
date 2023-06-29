@@ -1,0 +1,6 @@
+*.o
+*.elf
+*.bin
+*.s37
+*.map
+/src/version.h
