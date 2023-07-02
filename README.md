@@ -2,7 +2,9 @@
 
 This repository contains a replacement firmware application for the NiceRF SA8x8 family of radio modules.
 
-Operation of modules running this firmware is similar to that of the official factory firmware as commands are sent via a UART at 115200 Baud, however two special commands enable I2C register level control to a module's internal RDA1846S transceiver. Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
+Operation of modules running this firmware is similar to that of the official factory firmware as commands are sent via a UART at 9600 Baud, however two special commands enable I2C register level control to a module's internal RDA1846S transceiver.
+
+Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
 
 ## Command Set
 
@@ -17,11 +19,26 @@ Operation of modules running this firmware is similar to that of the official fa
 
 ## Build Environment
 
- - rl78-gcc
+If you have rl78-elf-gcc, just clone the repository and run `make` to generate a firmware image flashable with `rl78flash`. A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-toolchain.sh) is provided for building a recent toolchain as an OCI container image using `buildah` and the resulting container will be used to automate release generation in the near future.
 
 ## Firmware Flashing
 
- - rl78flash
+The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) requires a 115200 Baud UART and two Schottky diodes.
+
+    ./rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
+    rl78flash v0.7.0
+    Device: R5F1026A
+    Code size: 16 kB
+    Data size: 2 kB
+    Protocol configuration: protocol=0, code_block=1024, data_block=1024
+    Erase code flash
+    Erase data flash
+    Read file "sa8x8-fw.s37"
+    Write code flash
+    Write data flash
+    Verify Code flash
+    Verify Data flash
+    Reset MCU
 
 ## Acknowledgements
 
