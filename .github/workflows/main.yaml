@@ -1,0 +1,34 @@
+name: Build sa8x8-fw
+
+on:
+  push:
+    paths:
+      - src/**
+  pull_request:
+    paths:
+      - src/**
+
+jobs:
+  build:
+    name: Generate firmware artifacts
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup
+        uses: eWaterCycle/setup-apptainer@v2
+        with:
+          apptainer-version: 1.1.9
+
+      - name: Compile
+        run: apptainer run https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif make
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: sa8x8-fw.s37
+          path: sa8x8-fw.s37
+
