@@ -25,7 +25,7 @@ If you have rl78-elf-gcc, just clone the repository and run `make` to generate a
 
 The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) requires a 115200 Baud UART and two Schottky diodes.
 
-    ./rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
+    $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
     rl78flash v0.7.0
     Device: R5F1026A
     Code size: 16 kB
