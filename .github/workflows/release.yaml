@@ -1,0 +1,37 @@
+name: Release sa8x8-fw
+
+on:
+  push:
+    tags:
+      - 'v**'
+
+jobs:
+  build:
+    name: Generate firmware release
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup
+        uses: eWaterCycle/setup-apptainer@v2
+        with:
+          apptainer-version: 1.1.9
+
+      - name: Compile
+        run: apptainer run https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif make
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: sa8x8-fw.s37
+          path: sa8x8-fw.s37
+
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "sa8x8-fw.*"
+          body: "This release contains an automatically generated 'sa8x8-fw.s37' file which can be flashed by rl78flash."
+
