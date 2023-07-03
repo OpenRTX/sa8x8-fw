@@ -1,5 +1,7 @@
 # sa8x8-fw
 
+[![Build sa8x8-fw](https://github.com/OpenRTX/sa8x8-fw/actions/workflows/main.yaml/badge.svg)](https://github.com/OpenRTX/sa8x8-fw/actions/workflows/main.yaml)
+
 This repository contains a replacement firmware application for the NiceRF SA8x8 family of radio modules.
 
 Operation of modules running this firmware is similar to that of the official factory firmware as commands are sent via a UART at 9600 Baud, however two special commands enable I2C register level control to a module's internal RDA1846S transceiver.
