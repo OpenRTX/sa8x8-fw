@@ -47,11 +47,11 @@ void uart_init(void) {
   SAU0EN = 1;         // Release and enable clock to serial array unit 0
   delay(1);           // Delay recommended by hardware manual
 
-  SPS0 = 0x0022U;     // Set operation clock:
+  SPS0 = 0x0033U;     // Set operation clock:
                       //* <07>PRS013=0, <06>PRS012=0
-                      //* <05>PRS011=1, <04>PRS010=0: CK01 is fCLK / 2**2
+                      //* <05>PRS011=1, <04>PRS010=1: CK01 is fCLK / 2**3
                       //* <03>PRS003=0, <02>PRS002=0
-                      //* <01>PRS001=1, <00>PRS000=0: CK00 is fCLK / 2**2
+                      //* <01>PRS001=1, <00>PRS000=1: CK00 is fCLK / 2**3
 
   ST0 = 0x03U;        // Stop serial channel 0
 
@@ -86,7 +86,7 @@ void uart_init(void) {
                       //* <05>SLC001=0, <04>SLC000=1: Single stop bit
                       //* <01>DLS001=1, <00>DLS000=1: 8-bit data length
 
-  SDR00 = 0x1E00U;    // Set transfer symbol rate: fMCK / 32
+  SDR00 = 0xBE00U;    // Set transfer symbol rate: fMCK / 192
 
   NFEN0 |= 0x01U;     // Enable reception noise filtering
   SIR01 |= 0x07U;     // Clear error flags
@@ -107,7 +107,7 @@ void uart_init(void) {
                       //* <05>SLC011=0, <04>SLC010=1: Single stop bit
                       //* <01>DLS011=1, <00>DLS010=1: 8-bit data length
 
-  SDR01 = 0x1E00U;    // Set receive symbol rate: fMCK / 32
+  SDR01 = 0xBE00U;    // Set receive symbol rate: fMCK / 192
 
   SO0 |= 0x01U;     // Set buffered output of serial communication array channel
   SOE0 |= 0x01U;    // Enable output of serial communication array channel
