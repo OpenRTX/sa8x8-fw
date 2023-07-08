@@ -108,9 +108,6 @@ char *i2a(uint16_t n) {
     s[i] = "0123456789"[n % 10];
   }
 
-  while (n && i)
-    ;
-
   return &s[i + 1];
 }
 
