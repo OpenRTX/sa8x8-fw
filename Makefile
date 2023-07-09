@@ -7,8 +7,29 @@ OBJDUMP = $(PREFIX)objdump
 
 TARGET  = sa8x8-fw
 
-CFLAGS  = -Isrc -g -Os -Wall --param=min-pagesize=0 -mmul=g13
-LDFLAGS = -nostartfiles -static-libgcc -lgcc -Wl,-Map,$(TARGET).map -Wl,-z,noexecstack -T ./src/r5f1026a/r5f1026a.ld
+CFLAGS  = -Isrc -g -Os --param=min-pagesize=0 -mcpu=g13 -mmul=g10 \
+	  -ffunction-sections \
+	  -fdata-sections \
+	  -fdiagnostics-parseable-fixits \
+	  -Wunused \
+	  -Wuninitialized \
+	  -Wall \
+	  -Wextra \
+	  -Wmissing-declarations \
+	  -Wconversion \
+	  -Wpointer-arith \
+	  -Wshadow \
+	  -Waggregate-return
+
+LDFLAGS = -nostartfiles -static-libgcc -lgcc \
+	  -Wl,-Map,$(TARGET).map \
+	  -Wl,--start-group \
+	  -Wl,--end-group \
+	  -Wl,-z,noexecstack \
+	  -Wl,-e_PowerOnReset \
+	  -Wl,--gc-sections \
+	  -Wl,--cref \
+	  -T ./src/r5f1026a/r5f1026a.ld
 
 GIT_DIR ?= .git
 ifneq ($(and $(wildcard $(GIT_DIR)),$(shell which git)),)
