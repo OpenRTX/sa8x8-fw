@@ -39,7 +39,8 @@ void delay(uint16_t n) {
  * Initialize UART0 for communication
  */
 void uart_init(void) {
-  PIOR &= ~(1U << 1); // Disable RxD0/TxD0 alternate
+  PIOR &= (uint8_t)
+          ~(1U << 1); // Disable RxD0/TxD0 alternate
 
   PM1_bit.no1 = 1;    // P11 (RxD0) is input until configured
   PM1_bit.no2 = 1;    // P12 (TxD0) is input until configured
@@ -316,7 +317,8 @@ static uint8_t _i2c_read(bool ack) {
  * Initialize GPIO for bit-banged I2C bus transactions
  */
 void i2c_init(void) {
-  PIOR &= ~(1U << 3); // Disable P41/P42 alternate
+  PIOR &= (uint8_t)
+          ~(1U << 3); // Disable P41/P42 alternate
 
   PMC4_bit.no1 = 0;   // P41 (SDIO) is digital I/O
   PMC4_bit.no2 = 0;   // P42 (SCLK) is digital I/O
@@ -334,7 +336,7 @@ void i2c_init(void) {
  * High-level I2C bus write transaction
  */
 void i2c_write(uint8_t addr, uint8_t reg, uint16_t val) {
-  uint8_t hi = (val >> 8) & 0xFF;
+  uint8_t hi = (uint8_t)((val >> 8) & 0xFF);
   uint8_t lo = val & 0xFF;
 
   _i2c_start();
