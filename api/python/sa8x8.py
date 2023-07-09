@@ -255,7 +255,7 @@ class SA8x8:
 
 def main():
     with serial.Serial() as ser:
-        ser.baudrate = 115200
+        ser.baudrate = 9600
         ser.port = '/dev/ttyUSB0'
         ser.open()
 
