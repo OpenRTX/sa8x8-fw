@@ -26,6 +26,7 @@ const char VERSION[] = "sa8x8/" GIT_HASH "\r\n";
 
 const char OK[] = "OK\r\n";
 const char ERR[] = "ERR\r\n";
+const char CRLF[] = "\r\n";
 
 struct ring rx;
 
@@ -87,7 +88,7 @@ char up(char c) {
 /*
  * Determine equivalence of two strings
  */
-int eq(char *s1, char *s2, uint16_t len) {
+int eq(const char *s1, const char *s2, uint16_t len) {
   while (len--) {
     if (*s1++ != *s2++) {
       return 0;
@@ -100,9 +101,16 @@ int eq(char *s1, char *s2, uint16_t len) {
 /*
  * Convert supplied number to ASCII character sequence
  */
-char *i2a(uint16_t n) {
+const char *i2a(uint16_t n) {
   static char s[8];
   uint8_t i;
+
+  s[7] = '\0';
+
+  if (n == 0) {
+    s[6] = '0';
+    return &s[6];
+  }
 
   for (i = 6; n && i; --i, n /= 10) {
     s[i] = "0123456789"[n % 10];
@@ -114,7 +122,7 @@ char *i2a(uint16_t n) {
 /*
  * Convert supplied ASCII character sequence to a number
  */
-uint16_t a2i(char *s, uint8_t *pos) {
+uint16_t a2i(const char *s, uint8_t *pos) {
   uint16_t n = 0;
   uint8_t i = *pos;
 
@@ -203,7 +211,7 @@ int main(void) {
 
       // Send register contents as response
       uart_puts(i2a(val));
-      uart_puts("\r\n\0");
+      uart_puts(CRLF);
 
       continue;
     }

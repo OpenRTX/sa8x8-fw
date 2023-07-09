@@ -7,7 +7,7 @@ OBJDUMP = $(PREFIX)objdump
 
 TARGET  = sa8x8-fw
 
-CFLAGS  = -Isrc -g -Os --param=min-pagesize=0 -mcpu=g13 -mmul=g10 \
+CFLAGS  = -Isrc -g -Os --param=min-pagesize=0 -mcpu=g13 \
 	  -ffunction-sections \
 	  -fdata-sections \
 	  -fdiagnostics-parseable-fixits \
@@ -21,14 +21,12 @@ CFLAGS  = -Isrc -g -Os --param=min-pagesize=0 -mcpu=g13 -mmul=g10 \
 	  -Wshadow \
 	  -Waggregate-return
 
-LDFLAGS = -nostartfiles -static-libgcc -lgcc \
-	  -Wl,-Map,$(TARGET).map \
-	  -Wl,--start-group \
-	  -Wl,--end-group \
+LDFLAGS = -nostartfiles \
 	  -Wl,-z,noexecstack \
 	  -Wl,-e_PowerOnReset \
 	  -Wl,--gc-sections \
 	  -Wl,--cref \
+	  -Wl,-Map,$(TARGET).map \
 	  -T ./src/r5f1026a/r5f1026a.ld
 
 GIT_DIR ?= .git

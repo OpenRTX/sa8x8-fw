@@ -87,9 +87,9 @@ extern struct ring rx;
  * Text processing
  */
 char up(char c);
-int eq(char *s1, char *s2, uint16_t len);
-char *i2a(uint16_t n);
-uint16_t a2i(char *s, uint8_t *pos);
+int eq(const char *s1, const char *s2, uint16_t len);
+const char *i2a(uint16_t n);
+uint16_t a2i(const char *s, uint8_t *pos);
 
 /*
  * Platform specific
