@@ -25,7 +25,7 @@ If you have rl78-elf-gcc, just clone the repository and run `make` to generate a
 
 ## Firmware Flashing
 
-The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) requires a 115200 Baud UART and two Schottky diodes.
+The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) (mode 1 or mode 3) requires a 115200 Baud UART operating at 3.3V and two Schottky diodes, such as 1N5817. The intention is to minimize voltage drop while operating at this logic level, so the exact part is not important. Be sure to specify the relevant mode while running `rl78flash`.
 
     $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
     rl78flash v0.7.0
@@ -41,6 +41,20 @@ The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enable
     Verify Code flash
     Verify Data flash
     Reset MCU
+
+## Programming Pinout
+
+From rear of module:
+
+    +-----------------------------+
+    |                      NRST O |
+    |  +--+     SA868S     MODE O |
+    |  |  |     VER:2.0     GND O |
+    |  +--+                 VCC O |
+    |                             |
+    +-----------------------------+
+
+When possible, use spring-loaded pins (pogo pins) to program these modules. Programming pads are prone to shearing off when wires soldered to the pads are under strain. The pitch of the pads is 2mm.
 
 ## Acknowledgements
 
