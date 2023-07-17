@@ -48,7 +48,7 @@ From rear of module:
 
     +-----------------------------+
     |                      NRST O |
-    |  +--+     SA868S     MODE O |
+    |  +--+     SA868S    TOOL0 O |
     |  |  |     VER:2.0     GND O |
     |  +--+                 VCC O |
     |                             |
