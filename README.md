@@ -58,7 +58,7 @@ When possible, use spring-loaded pins (pogo pins) to program these modules. Prog
 
 ## [T-TWR Plus OpenEdition](https://www.lilygo.cc/products/t-twr-plus)
 
-Programming procedure for these devices is very similar to the one described above. The only difference is that the programming interface is exposed at a JST SH-1.0 - 4-pin, 1mm pitch connector labeled `J4` in the [schematic](https://github.com/Xinyuan-LilyGO/T-TWR/blob/master/schematic/T-TWR-Plus_Rev2.0.pdf). The conector is located on the left hand side of the board, at the back, just above the USB-C connector. The pin map is as follows, from top to bottom:
+Programming procedure for these devices is very similar to the one described above. The only difference is that the programming interface is exposed at a JST SH-1.0 - 4-pin, 1mm pitch connector labeled `CN4` in the [schematic](https://github.com/Xinyuan-LilyGO/T-TWR/blob/master/schematic/T-TWR-Plus_Rev2.0.pdf). The conector is located on the left hand side of the board, at the back, just above the USB-C connector. The pin map is as follows, from top to bottom:
 
 | Pin number | Silkscreen label | Function      |
 |------------|------------------|---------------|
