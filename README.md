@@ -16,16 +16,18 @@ Configuration of modules through this low level interface facilitates the use of
 
 ## Supported Modules
 
- - [SA868S-V Open Edition](https://a.aliexpress.com/_mNLKxyC) (<33 dBm @ VHF)
- - [SA868S-U Open Edition](https://a.aliexpress.com/_mP5z5EG) (<33 dBm @ UHF)
+ - [SA868S-V](https://a.aliexpress.com/_mNLKxyC) (<33 dBm @ VHF)
+ - [SA868S-U](https://a.aliexpress.com/_mP5z5EG) (<33 dBm @ UHF)
+
+**Note:** The open and standard editions are the same hardware. The open edition contains no functional firmware, as it is erased following factory quality assurance, and is intended for end-user reprogramming with firmware like this one.
 
 ## Build Environment
 
-If you have rl78-elf-gcc, just clone the repository and run `make` to generate a firmware image flashable with `rl78flash`. A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-toolchain.sh) is provided for building a recent toolchain as an OCI container image using `buildah` and the resulting container will be used to automate release generation in the near future.
+A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-toolchain.sh) is provided for building a recent toolchain. This script requires [Buildah](https://buildah.io) and generates an OCI container image. A convenient [prebuilt toolchain](https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif) is available as an [Apptainer](https://apptainer.org/) image. The prebuilt toolchain is the quickest way to get started with development and is also used to automate release builds on GitHub.
 
 ## Firmware Flashing
 
-The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) (mode 1 or mode 3) requires a 115200 baud UART operating at 3.3V and two switching diodes, such as 1N4148 or 1N5817. The intention is to minimize voltage drop while operating at this logic level, so the exact part is not important. Be sure to specify the relevant mode while running `rl78flash`.
+The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) (mode 1 or mode 3) requires a 115200 baud UART operating at 3.3V and two switching diodes, such as 1N4148 or 1N5817. Schottky diodes are preferred in order to minimize voltage drop while operating at this logic level, but the exact part is not important. Be sure to specify the relevant mode while running `rl78flash`.
 
     $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
     rl78flash v0.7.0
@@ -42,7 +44,9 @@ The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enable
     Verify Data flash
     Reset MCU
 
-## Programming Pinout
+## Programming Pinouts
+
+### SA868S Module
 
 From rear of module:
 
@@ -50,22 +54,24 @@ From rear of module:
     |                      NRST O |
     |  +--+     SA868S    TOOL0 O |
     |  |  |     VER:2.0     GND O |
-    |  +--+                 VCC O |
+    |  +--+                 3V3 O |
     |                             |
     +-----------------------------+
 
-When possible, use spring-loaded pins (pogo pins) to program these modules. Programming pads are prone to shearing off when wires soldered to the pads are under strain. The pitch of the pads is 2mm.
+Refer to the module [schematics](https://github.com/OpenRTX/sa8x8-fw/files/12232818/SA868-open.pdf) for more information.
 
-## [T-TWR Plus OpenEdition](https://www.lilygo.cc/products/t-twr-plus)
+**Note:** When possible, use spring-loaded pins (pogo pins) to program these modules. Programming pads are prone to shearing off when wires soldered to the pads are under strain. The pitch of the pads is 2mm.
 
-Programming procedure for these devices is very similar to the one described above. The only difference is that the programming interface is exposed at a JST SH-1.0 - 4-pin, 1mm pitch connector labeled `CN4` in the [schematic](https://github.com/Xinyuan-LilyGO/T-TWR/blob/master/schematic/T-TWR-Plus_Rev2.0.pdf). The conector is located on the left hand side of the board, at the back, just above the USB-C connector. The pin map is as follows, from top to bottom:
+### T-TWR Plus
+
+The [T-TWR Plus](https://www.lilygo.cc/products/t-twr-plus) is a complete portable radio design using SA868S modules. The programming procedure for these devices is very similar to the one described above. The programming interface is exposed through a 4-pin JST SH-1.0 (1mm pitch) connector labeled **CN4** in the [schematic](https://github.com/Xinyuan-LilyGO/T-TWR/blob/master/schematic/T-TWR-Plus_Rev2.0.pdf). The connector is located on the rear of the board along the right edge, between the NeoPixel LED and a similar looking connector. The pin map is as follows, from top to bottom:
 
 | Pin number | Silkscreen label | Function      |
 |------------|------------------|---------------|
 | 1          | RG               | signal ground |
 | 2          | RV               | +3.3V supply  |
-| 3          | RT               | "tools"       |
-| 4          | RR               | reset         |
+| 3          | RT               | RL78 TOOL0    |
+| 4          | RR               | RL78 NRST     |
 
 The connection between the USB-UART converter (with exposed flow control pins - at least the RTS one - **and set to 3.3V operation**) is shown below.
 
