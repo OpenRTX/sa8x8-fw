@@ -11,6 +11,7 @@ Configuration of modules through this low level interface facilitates the use of
 ## Command Set
 
  - AT+VERSION
+ - AT+MODEL
  - AT+PEEK=_REG_
  - AT+POKE=_REG_,_VAL_
 
@@ -25,11 +26,15 @@ Configuration of modules through this low level interface facilitates the use of
 
 A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-toolchain.sh) is provided for building a recent toolchain. This script requires [Buildah](https://buildah.io) and generates an OCI container image. A convenient [prebuilt toolchain](https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif) is available as an [Apptainer](https://apptainer.org/) image. The prebuilt toolchain is the quickest way to get started with development and is also used to automate release builds on GitHub.
 
+    $ SIF=https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif
+    $ apptainer run $SIF make sa868s_vhf
+    $ apptainer run $SIF make sa868s_uhf
+
 ## Firmware Flashing
 
 The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) (mode 1 or mode 3) requires a 115200 baud UART operating at 3.3V and two switching diodes, such as 1N4148 or 1N5817. Schottky diodes are preferred in order to minimize voltage drop while operating at this logic level, but the exact part is not important. Be sure to specify the relevant mode while running `rl78flash`.
 
-    $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw.s37 -v
+    $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw-sa868s-uhf.s37 -v
     rl78flash v0.7.0
     Device: R5F1026A
     Code size: 16 kB

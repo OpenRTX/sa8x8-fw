@@ -19,10 +19,12 @@
 #include "version.h"
 
 const char CMD_VERSION[] = "+VERSION";
+const char CMD_MODEL[] = "+MODEL";
 const char CMD_PEEK[] = "+PEEK=";
 const char CMD_POKE[] = "+POKE=";
 
-const char VERSION[] = "sa8x8/" GIT_HASH "\r\n";
+const char VERSION[] = "sa8x8-fw/" GIT_HASH "\r\n";
+const char MODEL[] = MODULE_MODEL "\r\n";
 
 const char OK[] = "OK\r\n";
 const char ERR[] = "ERR\r\n";
@@ -190,6 +192,12 @@ int main(void) {
     // AT+VERSION: Display version information
     if (eq(&cmd[2], (char *)CMD_VERSION, sizeof(CMD_VERSION))) {
       uart_puts(VERSION);
+      continue;
+    }
+
+    // AT+MODEL: Display module information
+    if (eq(&cmd[2], (char *)CMD_MODEL, sizeof(CMD_MODEL))) {
+      uart_puts(MODEL);
       continue;
     }
 
