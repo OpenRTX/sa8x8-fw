@@ -189,13 +189,13 @@ int main(void) {
       continue;
     }
 
-    // AT+VERSION: Display version information
+    // AT+VERSION: Display firmware version information
     if (eq(&cmd[2], (char *)CMD_VERSION, sizeof(CMD_VERSION))) {
       uart_puts(VERSION);
       continue;
     }
 
-    // AT+MODEL: Display module information
+    // AT+MODEL: Display module model information
     if (eq(&cmd[2], (char *)CMD_MODEL, sizeof(CMD_MODEL))) {
       uart_puts(MODEL);
       continue;
