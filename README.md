@@ -11,6 +11,7 @@ Configuration of modules through this low level interface facilitates the use of
 ## Command Set
 
  - AT+VERSION
+ - AT+MODEL
  - AT+PEEK=_REG_
  - AT+POKE=_REG_,_VAL_
 

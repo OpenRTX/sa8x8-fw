@@ -5,6 +5,10 @@ on:
     tags:
       - 'v**'
 
+env:
+  SIF: https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif
+  TARGETS: sa868s_vhf sa868s_350 sa868s_uhf
+
 jobs:
   build:
     name: Generate firmware release
@@ -18,20 +22,18 @@ jobs:
       - name: Setup
         uses: eWaterCycle/setup-apptainer@v2
         with:
-          apptainer-version: 1.1.9
+          apptainer-version: 1.2.2
 
       - name: Compile
-        run: apptainer run https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif make
-
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: sa8x8-fw.s37
-          path: sa8x8-fw.s37
+        run: |
+          for T in $TARGETS
+          do
+            apptainer run $SIF make $T
+          done
 
       - name: Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "sa8x8-fw.*"
-          body: "This release contains an automatically generated 'sa8x8-fw.s37' file which can be flashed by rl78flash."
+          artifacts: "sa8x8-fw-*.s37"
+          body: "This release contains automatically generated firmware S-record files which can be flashed by rl78flash."
 
