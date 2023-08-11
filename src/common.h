@@ -98,7 +98,7 @@ uint16_t a2i(const char *s, uint8_t *pos);
  */
 void platform_init(void);
 void platform_sleep(void);
-void platform_refresh(bool *sq, bool *ctss, bool *vox);
+void platform_refresh(bool *sq, bool *css, bool *vox);
 
 /*
  * UART peripheral control
