@@ -385,6 +385,10 @@ void platform_init(void) {
   P1_bit.no0 = 0;   // P10 (RXEN) is low
   PM1_bit.no0 = 0;  // P10 (RXEN) is output
 
+  ADPC |= 0x01;     // P20 (SQ) is digital I/O
+  P2_bit.no0 = 1;   // P20 (SQ) is high
+  PM2_bit.no0 = 0;  // P20 (SQ) is output
+
   PM2_bit.no2 = 1;  // P22 (PTT) is input
 
   PMC1_bit.no4 = 0; // P14  (GPIO0) is digital I/O
@@ -397,5 +401,13 @@ void platform_init(void) {
 
 void platform_sleep(void) {
   asm("halt"); // Enter low power mode
+}
+
+void platform_refresh(bool *sq, bool *css, bool *vox) {
+  *sq = P2_bit.no3;  // Squelch status from internal AT1846S
+  P2_bit.no0 = !*sq; // Squelch status to external pin
+
+  *css = P1_bit.no4;  // CSS status from internal AT1846S
+  *vox = P13_bit.no7; // VOX status from internal AT1846S
 }
 

@@ -77,6 +77,28 @@ bool ring_get(struct ring *r, char *c) {
 }
 
 /*
+ * Is ring buffer empty?
+ */
+inline bool ring_empty(struct ring *r) {
+  if (r->put == r->get) {
+    return true;
+  }
+
+  return false;
+}
+
+/*
+ * Is ring buffer full?
+ */
+inline bool ring_full(struct ring *r) {
+  if (r->put->next == r->get) {
+    return true;
+  }
+
+  return false;
+}
+
+/*
  * Return upper case character for supplied ASCII character
  */
 char up(char c) {
@@ -158,9 +180,19 @@ int main(void) {
   char cmd[32];
   char *c;
 
+  // Transceiver status flags
+  bool sq;
+  bool css;
+  bool vox;
+
   while (1) {
-    // Enter low power mode and wait for interrupts
-    platform_sleep();
+    // Update status flags
+    platform_refresh(&sq, &css, &vox);
+
+    // Skip iteration if no incoming command
+    if (ring_empty(&rx)) {
+      continue;
+    }
 
     // Read command from UART
     uart_gets(cmd, 32);

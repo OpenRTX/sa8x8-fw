@@ -81,6 +81,8 @@ struct ring {
 void ring_init(struct ring *r, struct item *buf, uint16_t size);
 bool ring_put(struct ring *r, char c);
 bool ring_get(struct ring *r, char *c);
+bool ring_empty(struct ring *r);
+bool ring_full(struct ring *r);
 extern struct ring rx;
 
 /*
@@ -96,6 +98,7 @@ uint16_t a2i(const char *s, uint8_t *pos);
  */
 void platform_init(void);
 void platform_sleep(void);
+void platform_refresh(bool *sq, bool *ctss, bool *vox);
 
 /*
  * UART peripheral control
