@@ -278,8 +278,11 @@ int main(void) {
         continue;
       }
 
-      // Update register with requested value
-      i2c_write(I2C_ADDR_XCVR, (uint8_t)reg, val);
+      // Apply any platform specific poke actions
+      if (!platform_poke(I2C_ADDR_XCVR, (uint8_t)reg, val)) {
+        uart_puts(ERR);
+        continue;
+      }
 
       // Send command valid response
       uart_puts(OK);

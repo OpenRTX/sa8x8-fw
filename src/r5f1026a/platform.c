@@ -411,3 +411,23 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
   *vox = P13_bit.no7; // VOX status from internal AT1846S
 }
 
+bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val) {
+  // Not possible to TX and RX simultaneously
+  if (reg == 0x30 && (val & (1 << 6)) && (val & (1 << 5))) {
+    return false;
+  }
+
+  // TX requested so disable RXEN
+  if (reg == 0x30 && (val & (1 << 6))) {
+    P1_bit.no0 = 1; // P10 (RXEN) is high
+  }
+
+  i2c_write(addr, reg, val);
+
+  // RX requested so enable RXEN
+  if (reg == 0x30 && (val & (1 << 5))) {
+    P1_bit.no0 = 0; // P10 (RXEN) is low
+  }
+
+  return true;
+}
