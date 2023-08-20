@@ -55,9 +55,9 @@ OBJECTS_RL78 = \
 
 GIT_DIR ?= .git
 ifneq ($(and $(wildcard $(GIT_DIR)),$(shell which git)),)
-	GIT_HASH = $(shell git describe --always --dirty)
+	GIT_INFO = $(shell git describe --long --tags --abbrev=7 | sed 's/\([^-]*-g\)/r\1/;s/-/./g')
 else
-	GIT_HASH = "unknown"
+	GIT_INFO = "unknown"
 endif
 
 OUTPUTS = \
@@ -76,7 +76,7 @@ $(VERSION_HEADER):
 	@echo "#ifndef VERSION_H" >> $@
 	@echo "#define VERSION_H" >> $@
 	@echo "" >> $@
-	@echo "#define GIT_HASH \"$(GIT_HASH)\"" >> $@
+	@echo "#define GIT_INFO \"$(GIT_INFO)\"" >> $@
 	@echo "" >> $@
 	@echo "#define MODULE_MODEL \"$(MODEL)\"" >> $@
 	@echo "" >> $@

@@ -23,7 +23,7 @@ const char CMD_MODEL[] = "+MODEL";
 const char CMD_PEEK[] = "+PEEK=";
 const char CMD_POKE[] = "+POKE=";
 
-const char VERSION[] = "sa8x8-fw/" GIT_HASH "\r\n";
+const char VERSION[] = "sa8x8-fw/" GIT_INFO "\r\n";
 const char MODEL[] = MODULE_MODEL "\r\n";
 
 const char OK[] = "OK\r\n";
