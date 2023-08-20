@@ -28,6 +28,7 @@ Configuration of modules through this low level interface facilitates the use of
 A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-toolchain.sh) is provided for building a recent toolchain. This script requires [Buildah](https://buildah.io) and generates an OCI container image. A convenient [prebuilt toolchain](https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif) is available as an [Apptainer](https://apptainer.org/) image. The prebuilt toolchain is the quickest way to get started with development and is also used to automate release builds on GitHub. Just clone this repository and run the following commands from inside the directory:
 
     $ SIF=https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif
+    $ apptainer run $SIF make clean
     $ apptainer run $SIF make sa868s_vhf
     $ apptainer run $SIF make sa868s_uhf
 
