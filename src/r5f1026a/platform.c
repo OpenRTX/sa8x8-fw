@@ -403,6 +403,25 @@ void platform_sleep(void) {
   asm("halt"); // Enter low power mode
 }
 
+bool platform_turbo(void) {
+  SOE0 |= 0x01U; // Disable output of serial communication array channel
+
+  SPS0 = 0x0022U; // Set operation clock:
+                  //* <07>PRS013=0, <06>PRS012=0
+                  //* <05>PRS011=1, <04>PRS010=0: CK01 is fCLK / 2**2
+                  //* <03>PRS003=0, <02>PRS002=0
+                  //* <01>PRS001=1, <00>PRS000=0: CK00 is fCLK / 2**2
+
+  ST0 = 0x03U; // Stop serial channel 0
+
+  SDR00 = 0x1E00U; // Set transfer symbol rate: fMCK / 32
+  SDR01 = 0x1E00U; // Set receive symbol rate: fMCK / 32
+
+  SOE0 |= 0x01U; // Enable output of serial communication array channel
+
+  return true;
+}
+
 void platform_refresh(bool *sq, bool *css, bool *vox) {
   *sq = P2_bit.no3;  // Squelch status from internal AT1846S
   P2_bit.no0 = !*sq; // Squelch status to external pin

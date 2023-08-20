@@ -12,6 +12,7 @@ Configuration of modules through this low level interface facilitates the use of
 
  - AT+VERSION
  - AT+MODEL
+ - AT+TURBO
  - AT+PEEK=_REG_
  - AT+POKE=_REG_,_VAL_
 

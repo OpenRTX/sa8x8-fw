@@ -20,6 +20,7 @@
 
 const char CMD_VERSION[] = "+VERSION";
 const char CMD_MODEL[] = "+MODEL";
+const char CMD_TURBO[] = "+TURBO";
 const char CMD_PEEK[] = "+PEEK=";
 const char CMD_POKE[] = "+POKE=";
 
@@ -230,6 +231,16 @@ int main(void) {
     // AT+MODEL: Display module model information
     if (eq(&cmd[2], (char *)CMD_MODEL, sizeof(CMD_MODEL))) {
       uart_puts(MODEL);
+      continue;
+    }
+
+    // AT+TURBO: Enter high speed UART mode
+    if (eq(&cmd[2], (char *)CMD_TURBO, sizeof(CMD_TURBO))) {
+      if (platform_turbo()) {
+        uart_puts(OK);
+      } else {
+        uart_puts(ERR);
+      }
       continue;
     }
 
