@@ -417,6 +417,8 @@ bool platform_turbo(void) {
   SDR00 = 0x1E00U; // Set transfer symbol rate: fMCK / 32
   SDR01 = 0x1E00U; // Set receive symbol rate: fMCK / 32
 
+  SS0 |= 0x03U; // Serial channel start operation
+
   SOE0 |= 0x01U; // Enable output of serial communication array channel
 
   return true;
