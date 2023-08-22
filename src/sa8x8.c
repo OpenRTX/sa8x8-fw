@@ -236,11 +236,8 @@ int main(void) {
 
     // AT+TURBO: Enter high speed UART mode
     if (eq(&cmd[2], (char *)CMD_TURBO, sizeof(CMD_TURBO))) {
-      if (platform_turbo()) {
-        uart_puts(OK);
-      } else {
-        uart_puts(ERR);
-      }
+      uart_puts(OK);
+      platform_turbo();
       continue;
     }
 

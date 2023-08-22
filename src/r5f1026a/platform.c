@@ -403,7 +403,7 @@ void platform_sleep(void) {
   asm("halt"); // Enter low power mode
 }
 
-bool platform_turbo(void) {
+void platform_turbo(void) {
   SOE0 |= 0x01U; // Disable output of serial communication array channel
 
   SPS0 = 0x0022U; // Set operation clock:
@@ -420,8 +420,6 @@ bool platform_turbo(void) {
   SS0 |= 0x03U; // Serial channel start operation
 
   SOE0 |= 0x01U; // Enable output of serial communication array channel
-
-  return true;
 }
 
 void platform_refresh(bool *sq, bool *css, bool *vox) {
