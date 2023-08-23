@@ -404,7 +404,9 @@ void platform_sleep(void) {
 }
 
 void platform_turbo(void) {
-  SOE0 |= 0x01U; // Disable output of serial communication array channel
+  asm("di"); // Disable interrupts
+
+  SOE0 &= 0xFEU; // Disable output of serial communication array channel
 
   SPS0 = 0x0022U; // Set operation clock:
                   //* <07>PRS013=0, <06>PRS012=0
@@ -420,6 +422,8 @@ void platform_turbo(void) {
   SS0 |= 0x03U; // Serial channel start operation
 
   SOE0 |= 0x01U; // Enable output of serial communication array channel
+
+  asm("ei"); // Enable interrupts
 }
 
 void platform_refresh(bool *sq, bool *css, bool *vox) {
