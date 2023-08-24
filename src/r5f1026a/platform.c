@@ -63,13 +63,13 @@ void uart_init(void) {
 
   SRMK0 = 1U;         // Disable INTSR0 interrupt
   SRIF0 = 0U;         // Clear INTSR0 interrupt
-  SRPR10 = 1U;        // Set INTSR0 lowest priority
-  SRPR00 = 1U;        // Set INTSR0 lowest priority
+  SRPR10 = 1U;        // Set INTSR0 medium priority
+  SRPR00 = 0U;        // Set INTSR0 medium priority
 
   SREMK0 = 1U;        // Disable INTSRE0 interrupt
   SREIF0 = 0U;        // Clear INTSRE0 interrupt flag
-  SREPR10 = 1U;       // Set INTSRE0 lowest priority
-  SREPR00 = 1U;       // Set INTSRE0 lowest priority
+  SREPR10 = 0U;       // Set INTSRE0 high priority
+  SREPR00 = 1U;       // Set INTSRE0 high priority
 
   SMR00 = 0x0023U;    // Set operation mode:
                       //* <15>CKS00=0: Operation clock CK00 set by SPS0
@@ -404,9 +404,14 @@ void platform_sleep(void) {
 }
 
 void platform_turbo(void) {
+  while (SSR00L & 0x20U)
+    ; // Wait for any pending transmit data
+
+  delay(1000);
+
   asm("di"); // Disable interrupts
 
-  SOE0 &= 0xFEU; // Disable output of serial communication array channel
+  ST0 = 0x03U; // Stop serial channel 0
 
   SPS0 = 0x0022U; // Set operation clock:
                   //* <07>PRS013=0, <06>PRS012=0
@@ -414,14 +419,12 @@ void platform_turbo(void) {
                   //* <03>PRS003=0, <02>PRS002=0
                   //* <01>PRS001=1, <00>PRS000=0: CK00 is fCLK / 2**2
 
-  ST0 = 0x03U; // Stop serial channel 0
-
   SDR00 = 0x1E00U; // Set transfer symbol rate: fMCK / 32
   SDR01 = 0x1E00U; // Set receive symbol rate: fMCK / 32
 
   SS0 |= 0x03U; // Serial channel start operation
 
-  SOE0 |= 0x01U; // Enable output of serial communication array channel
+  delay(1000);
 
   asm("ei"); // Enable interrupts
 }
