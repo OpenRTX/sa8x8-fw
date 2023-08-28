@@ -67,6 +67,7 @@ OUTPUTS = \
 
 VERSION_HEADER = src/version.h
 
+.PHONY: $(VERSION_HEADER)
 $(VERSION_HEADER):
 	@echo "Creating $@ for $(MODEL)"
 	@echo "/*" > $@
