@@ -385,9 +385,13 @@ void platform_init(void) {
   P1_bit.no0 = 0;   // P10 (RXEN) is low
   PM1_bit.no0 = 0;  // P10 (RXEN) is output
 
-  ADPC |= 0x01;     // P20 (SQ) is digital I/O
+  ADPC |= 0x01;     // P20-P23 are digital I/O
+
   P2_bit.no0 = 1;   // P20 (SQ) is high
   PM2_bit.no0 = 0;  // P20 (SQ) is output
+
+  P2_bit.no1 = 1;   // P21 (H/L) is high
+  PM2_bit.no1 = 0;  // P21 (H/L) is output
 
   PM2_bit.no2 = 1;  // P22 (PTT) is input
 
@@ -456,4 +460,14 @@ bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val) {
   }
 
   return true;
+}
+
+void platform_amp_enable(bool state) {
+  if (state) {
+    // Enable power amplifier
+    P2_bit.no1 = 0;   // P21 (H/L) is low
+  } else {
+    // Disable power amplifier
+    P2_bit.no1 = 1;   // P21 (H/L) is high
+  }
 }

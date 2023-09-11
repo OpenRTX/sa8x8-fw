@@ -23,6 +23,7 @@ const char CMD_MODEL[] = "+MODEL";
 const char CMD_TURBO[] = "+TURBO";
 const char CMD_PEEK[] = "+PEEK=";
 const char CMD_POKE[] = "+POKE=";
+const char CMD_AMP[] = "+AMP=";
 
 const char VERSION[] = "sa8x8-fw/" GIT_INFO "\r\n";
 const char MODEL[] = MODULE_MODEL "\r\n";
@@ -291,6 +292,28 @@ int main(void) {
         uart_puts(ERR);
         continue;
       }
+
+      // Send command valid response
+      uart_puts(OK);
+
+      continue;
+    }
+
+    // AT+AMP=<0,1>: Set power amplifier state
+    if (eq(&cmd[2], (char *)CMD_AMP, sizeof(CMD_AMP) - 1)) {
+      uint8_t i = sizeof(CMD_AMP) + 1;
+
+      // Parse state
+      bool state = (bool) a2i(cmd, &i);
+
+      // Error if missing terminator
+      if (!(cmd[i] == '\0')) {
+        uart_puts(ERR);
+        continue;
+      }
+
+      // Set requested amplifier state
+      platform_amp_enable(state);
 
       // Send command valid response
       uart_puts(OK);

@@ -15,6 +15,7 @@ Configuration of modules through this low level interface facilitates the use of
  - AT+TURBO
  - AT+PEEK=_REG_
  - AT+POKE=_REG_,_VAL_
+ - AT+AMP=_0_/_1_
 
 ## Supported Modules
 

@@ -101,6 +101,7 @@ void platform_sleep(void);
 void platform_turbo(void);
 void platform_refresh(bool *sq, bool *css, bool *vox);
 bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val);
+void platform_amp_enable(bool state);
 
 /*
  * UART peripheral control
