@@ -385,9 +385,9 @@ void platform_init(void) {
   P1_bit.no0 = 0;   // P10 (RXEN) is low
   PM1_bit.no0 = 0;  // P10 (RXEN) is output
 
-  ADPC |= 0x01;     // P20-P23 are digital I/O
+  ADPC = 0x01;      // P20-P23 are digital I/O
 
-  P2_bit.no0 = 1;   // P20 (SQ) is high
+  P2_bit.no0 = 0;   // P20 (SQ) is low
   PM2_bit.no0 = 0;  // P20 (SQ) is output
 
   P2_bit.no1 = 1;   // P21 (H/L) is high
@@ -434,9 +434,7 @@ void platform_turbo(void) {
 }
 
 void platform_refresh(bool *sq, bool *css, bool *vox) {
-  *sq = P2_bit.no3;  // Squelch status from internal AT1846S
-  P2_bit.no0 = !*sq; // Squelch status to external pin
-
+  *sq = P2_bit.no3;   // Squelch status from internal AT1846S
   *css = P1_bit.no4;  // CSS status from internal AT1846S
   *vox = P13_bit.no7; // VOX status from internal AT1846S
 }
@@ -469,5 +467,15 @@ void platform_amp_enable(bool state) {
   } else {
     // Disable power amplifier
     P2_bit.no1 = 1;   // P21 (H/L) is high
+  }
+}
+
+void platform_audio_enable(bool state) {
+  if (state) {
+    // Enable external audio amplifier
+    P2_bit.no0 = 0;   // P20 (SQ) is low
+  } else {
+    // Disable external audio amplifier
+    P2_bit.no0 = 1;   // P20 (SQ) is high
   }
 }
