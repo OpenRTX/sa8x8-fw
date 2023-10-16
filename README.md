@@ -4,18 +4,23 @@
 
 This repository contains a replacement firmware application for the NiceRF SA8x8 family of radio modules.
 
-Operation of modules running this firmware is similar to that of the official factory firmware as commands are sent via a UART at 9600 Baud, however two special commands enable I2C register level control to a module's internal RDA1846S transceiver.
+In contrast to the official factory firmware, two special commands (PEEK and POKE) enable direct register level control to a module's internal RDA1846S transceiver. Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
 
-Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
+**Note:** This firmware is not yet suitable as a drop-in replacement for the original firmware. Applications using the official factory firmware programming interface are not expected to function properly.
 
 ## Command Set
 
- - AT+VERSION
- - AT+MODEL
- - AT+TURBO
- - AT+PEEK=_REG_
- - AT+POKE=_REG_,_VAL_
- - AT+AMP=_0_/_1_
+The following commands are available in this firmware:
+
+| Command             | Description                          |
+| ------------------- | ------------------------------------ |
+| AT+VERSION          | Display firmware version information |
+| AT+MODEL            | Display module model information     |
+| AT+TURBO            | Enter high speed UART mode           |
+| AT+PEEK=_REG_       | Get transceiver register contents    |
+| AT+POKE=_REG_,_VAL_ | Set transceiver register contents    |
+| AT+AMP=_0_/_1_      | Set power amplifier state            |
+| AT+AUDIO=_0_/_1_    | Set external audio amplifier state   |
 
 ## Supported Modules
 
@@ -45,7 +50,7 @@ The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enable
     Protocol configuration: protocol=0, code_block=1024, data_block=1024
     Erase code flash
     Erase data flash
-    Read file "sa8x8-fw.s37"
+    Read file "sa8x8-fw-sa868s-uhf.s37"
     Write code flash
     Write data flash
     Verify Code flash
