@@ -42,7 +42,7 @@ A [script](https://github.com/OpenRTX/sa8x8-fw/blob/main/tools/build-rl78-elf-to
 
 The [rl78flash](https://github.com/msalau/rl78flash) tool by Maksim Salau enables flashing SA8x8 modules through the RL78 serial bootloader. The physical [programming interface](https://github.com/msalau/rl78flash/blob/master/hw/rl78s-hw.png) (mode 1 or mode 3) requires a 115200 baud UART operating at 3.3V and two switching diodes, such as 1N4148 or 1N5817. Schottky diodes are preferred in order to minimize voltage drop while operating at this logic level, but the exact part is not important. Be sure to specify the relevant mode while running `rl78flash`.
 
-    $ rl78flash -i /dev/ttyUSB0 -m 1 -a sa8x8-fw-sa868s-uhf.s37 -v
+    $ rl78flash -m 3 -a -v /dev/ttyUSB0 sa8x8-fw-sa868s-uhf.s37
     rl78flash v0.7.0
     Device: R5F1026A
     Code size: 16 kB
