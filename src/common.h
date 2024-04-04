@@ -122,7 +122,7 @@ extern const uint8_t I2C_ADDR_XCVR;
 /*
  * Time management
  */
-void delay(uint16_t n);
+void delay(uint32_t n);
 
 #endif
 

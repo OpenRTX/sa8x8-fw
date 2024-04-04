@@ -24,10 +24,16 @@
 const uint8_t I2C_ADDR_XCVR = 0xE2U;
 
 /*
+ * number of cycles to delay TX/RX switching at 16MHz, if needed
+ */
+const uint32_t RF_SWITCH_DELAY = 160000;  
+
+/*
  * Successfully do nothing
  */
-void delay(uint16_t n) {
+void delay(uint32_t n) {
   while (n-- > 0) {
+    // Delay 4 clock cycles per n
     asm("nop");
     asm("nop");
     asm("nop");
@@ -437,6 +443,22 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
   *sq = P2_bit.no3;   // Squelch status from internal AT1846S
   *css = P1_bit.no4;  // CSS status from internal AT1846S
   *vox = P13_bit.no7; // VOX status from internal AT1846S
+
+  // Hardware PTT control, polling necessary on P22
+  if (P2_bit.no2 == 0) // if PTT pressed
+  {
+    // TX requested so disable RXEN
+    if (RF_SWITCH_DELAY > 65535)
+    {
+      /* code */
+    } else {
+
+    }
+    
+    P1_bit.no0 = 1; // P10 (RXEN) is high
+  } else {
+    P1_bit.no0 = 0; // P10 (RXEN) is low
+  }
 }
 
 bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val) {
@@ -447,14 +469,16 @@ bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val) {
 
   // TX requested so disable RXEN
   if (reg == 0x30 && (val & (1 << 6))) {
-    P1_bit.no0 = 1; // P10 (RXEN) is high
+    //P1_bit.no0 = 1; // P10 (RXEN) is high
+    return false; // HW PTT override
   }
 
   i2c_write(addr, reg, val);
 
   // RX requested so enable RXEN
   if (reg == 0x30 && (val & (1 << 5))) {
-    P1_bit.no0 = 0; // P10 (RXEN) is low
+    //P1_bit.no0 = 0; // P10 (RXEN) is low
+    return false; // HW PTT override
   }
 
   return true;
