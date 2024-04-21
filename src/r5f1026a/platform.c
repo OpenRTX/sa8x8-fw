@@ -454,13 +454,11 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
   {
     if (PTT_STATE == 0) // Transition from PTT not pressed to PTT pressed
     {
-      
       PTT_STATE = 1; // Execute transmit sequence once
       tmp = i2c_read(I2C_ADDR_XCVR, 0x30); // Read contents of reg 0x30
-      tmp = (tmp & ~(1<<5)) | (1<<6);
+      tmp = (tmp & ~(1<<5)) | (1<<6); // Set bits for TX on and RX off
       P1_bit.no0 = 1; // P10 (RXEN) is high
-      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // Write tmp to 0x30
-      
+      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // Write tmp to 0x30 
     }
 
   } else { // If PTT not pressed
@@ -468,7 +466,7 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
     {
       PTT_STATE = 0; // Execute receive sequence once
       tmp = i2c_read(I2C_ADDR_XCVR, 0x30); // Read contents of reg 0x30
-      tmp = (tmp & ~(1<<6) )| (1<<5);
+      tmp = (tmp & ~(1<<6) )| (1<<5); // Set bits for TX off and RX on
       P1_bit.no0 = 0; // P10 (RXEN) is low
       i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // Write tmp to 0x30
     }

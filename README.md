@@ -6,7 +6,7 @@ This repository contains a replacement firmware application for the NiceRF SA8x8
 
 In contrast to the official factory firmware, two special commands (PEEK and POKE) enable direct register level control to a module's internal RDA1846S transceiver. Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
 
-**Note:** This firmware is not yet suitable as a drop-in replacement for the original firmware. Applications using the official factory firmware programming interface are not expected to function properly. Hardware control of PTT (setting RL78 GPIO to enable/disable amplifiers and issue TX/RX commands to RDA1745S) has been implemented.
+**Note:** This firmware is not yet suitable as a drop-in replacement for the original firmware. Applications using the official factory firmware programming interface are not expected to function properly. Hardware control of PTT (setting RL78 GPIO to enable/disable amplifiers and issue TX/RX commands to RDA1846S) has been implemented.
 
 ## Command Set
 
