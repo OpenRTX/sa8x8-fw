@@ -24,16 +24,13 @@
 const uint8_t I2C_ADDR_XCVR = 0xE2U;
 
 /*
- * Temporary value to store contents of reg 0x30 in
+ * Temporary value to store contents of reg 0x30
  */
 uint16_t tmp;
 
-
 /*
- * number of cycles to delay TX/RX switching at 16MHz, if needed
+ * Flag to store PTT state for transition detection
  */
-const uint32_t RF_SWITCH_DELAY = 160000;
-
 int PTT_STATE;
 
 /*
@@ -453,29 +450,28 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
   *vox = P13_bit.no7; // VOX status from internal AT1846S
 
   // Hardware PTT control, polling necessary on P22
-  if (P2_bit.no2 == 0) // if PTT pressed
+  if (P2_bit.no2 == 0) // If PTT pressed
   {
-    if (PTT_STATE == 0)// transition from PTT not pressed to PTT pressed
+    if (PTT_STATE == 0) // Transition from PTT not pressed to PTT pressed
     {
       
-      PTT_STATE = 1; // execute transmit sequence once
-      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); //read contents of reg 0x30
+      PTT_STATE = 1; // Execute transmit sequence once
+      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); // Read contents of reg 0x30
       tmp = (tmp & ~(1<<5)) | (1<<6);
       P1_bit.no0 = 1; // P10 (RXEN) is high
-      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // write tmp to 0x30
+      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // Write tmp to 0x30
       
     }
 
-  } else { // if PTT not pressed
-    if (PTT_STATE == 1)
+  } else { // If PTT not pressed
+    if (PTT_STATE == 1) // Transition from PTT pressed to PTT not pressed
     {
-      PTT_STATE = 0; // execute receive sequence once
-      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); //read contents of reg 0x30
+      PTT_STATE = 0; // Execute receive sequence once
+      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); // Read contents of reg 0x30
       tmp = (tmp & ~(1<<6) )| (1<<5);
       P1_bit.no0 = 0; // P10 (RXEN) is low
-      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // write tmp to 0x30
+      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // Write tmp to 0x30
     }
-    
   }
 }
 
