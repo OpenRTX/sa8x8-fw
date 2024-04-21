@@ -24,9 +24,17 @@
 const uint8_t I2C_ADDR_XCVR = 0xE2U;
 
 /*
+ * Temporary value to store contents of reg 0x30 in
+ */
+uint16_t tmp;
+
+
+/*
  * number of cycles to delay TX/RX switching at 16MHz, if needed
  */
-const uint32_t RF_SWITCH_DELAY = 160000;  
+const uint32_t RF_SWITCH_DELAY = 160000;
+
+int PTT_STATE;
 
 /*
  * Successfully do nothing
@@ -447,17 +455,27 @@ void platform_refresh(bool *sq, bool *css, bool *vox) {
   // Hardware PTT control, polling necessary on P22
   if (P2_bit.no2 == 0) // if PTT pressed
   {
-    // TX requested so disable RXEN
-    if (RF_SWITCH_DELAY > 65535)
+    if (PTT_STATE == 0)// transition from PTT not pressed to PTT pressed
     {
-      /* code */
-    } else {
+      
+      PTT_STATE = 1; // execute transmit sequence once
+      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); //read contents of reg 0x30
+      tmp = (tmp & ~(1<<5)) | (1<<6);
+      P1_bit.no0 = 1; // P10 (RXEN) is high
+      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // write tmp to 0x30
+      
+    }
 
+  } else { // if PTT not pressed
+    if (PTT_STATE == 1)
+    {
+      PTT_STATE = 0; // execute receive sequence once
+      tmp = i2c_read(I2C_ADDR_XCVR, 0x30); //read contents of reg 0x30
+      tmp = (tmp & ~(1<<6) )| (1<<5);
+      P1_bit.no0 = 0; // P10 (RXEN) is low
+      i2c_write(I2C_ADDR_XCVR, 0x30, tmp); // write tmp to 0x30
     }
     
-    P1_bit.no0 = 1; // P10 (RXEN) is high
-  } else {
-    P1_bit.no0 = 0; // P10 (RXEN) is low
   }
 }
 
