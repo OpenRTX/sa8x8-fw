@@ -21,6 +21,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define CRLF "\r\n"
+
+#define TX (1U << 6)
+#define RX (1U << 5)
+
 /*
  * Bit-level access for uint8_t
  */
@@ -76,6 +81,16 @@ struct ring {
 };
 
 /*
+ * Internal platform state
+ */
+struct platform_state {
+  bool ptt;
+  bool css;
+  bool vox;
+  bool sq;
+};
+
+/*
  * Ring buffer manipulation
  */
 void ring_init(struct ring *r, struct item *buf, uint16_t size);
@@ -99,10 +114,11 @@ uint16_t a2i(const char *s, uint8_t *pos);
 void platform_init(void);
 void platform_sleep(void);
 void platform_turbo(void);
-void platform_refresh(bool *sq, bool *css, bool *vox);
-bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val);
-void platform_amp_enable(bool state);
-void platform_audio_enable(bool state);
+void platform_refresh(struct platform_state *state);
+bool platform_peek(uint8_t reg, uint16_t *val);
+bool platform_poke(uint8_t reg, uint16_t val);
+void platform_amp(bool enabled);
+void platform_audio(bool enabled);
 
 /*
  * UART peripheral control

@@ -433,35 +433,57 @@ void platform_turbo(void) {
   asm("ei"); // Enable interrupts
 }
 
-void platform_refresh(bool *sq, bool *css, bool *vox) {
-  *sq = P2_bit.no3;   // Squelch status from internal AT1846S
-  *css = P1_bit.no4;  // CSS status from internal AT1846S
-  *vox = P13_bit.no7; // VOX status from internal AT1846S
+void platform_refresh(struct platform_state *state) {
+  bool ptt = !P2_bit.no2;
+  uint16_t val;
+
+  if (ptt && !state->ptt) {
+    // Enable PTT if requested and not enabled previously
+    platform_peek(0x30, &val);
+    val = (val | TX) & ~RX;
+    platform_poke(0x30, val);
+  } else if (!ptt && state->ptt) {
+    // Disable PTT if requested and enabled previously
+    platform_peek(0x30, &val);
+    val = (val & ~TX) | RX;
+    platform_poke(0x30, val);
+  }
+
+  state->ptt = ptt;         // Push to talk from external GPIO
+  state->css = P1_bit.no4;  // CSS status from internal AT1846S
+  state->vox = P13_bit.no7; // VOX status from internal AT1846S
+  state->sq = P2_bit.no3;   // Squelch status from internal AT1846S
 }
 
-bool platform_poke(uint8_t addr, uint8_t reg, uint16_t val) {
+bool platform_peek(uint8_t reg, uint16_t *val) {
+  *val = i2c_read(I2C_ADDR_XCVR, reg);
+
+  return true;
+}
+
+bool platform_poke(uint8_t reg, uint16_t val) {
   // Not possible to TX and RX simultaneously
-  if (reg == 0x30 && (val & (1 << 6)) && (val & (1 << 5))) {
+  if (reg == 0x30 && (val & TX) && (val & RX)) {
     return false;
   }
 
   // TX requested so disable RXEN
-  if (reg == 0x30 && (val & (1 << 6))) {
+  if (reg == 0x30 && (val & TX)) {
     P1_bit.no0 = 1; // P10 (RXEN) is high
   }
 
-  i2c_write(addr, reg, val);
+  i2c_write(I2C_ADDR_XCVR, reg, val);
 
   // RX requested so enable RXEN
-  if (reg == 0x30 && (val & (1 << 5))) {
+  if (reg == 0x30 && (val & RX)) {
     P1_bit.no0 = 0; // P10 (RXEN) is low
   }
 
   return true;
 }
 
-void platform_amp_enable(bool state) {
-  if (state) {
+void platform_amp(bool enabled) {
+  if (enabled) {
     // Enable power amplifier
     P2_bit.no1 = 0;   // P21 (H/L) is low
   } else {
@@ -470,8 +492,8 @@ void platform_amp_enable(bool state) {
   }
 }
 
-void platform_audio_enable(bool state) {
-  if (state) {
+void platform_audio(bool enabled) {
+  if (enabled) {
     // Enable external audio amplifier
     P2_bit.no0 = 0;   // P20 (SQ) is low
   } else {

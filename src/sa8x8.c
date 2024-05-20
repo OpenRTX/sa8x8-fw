@@ -26,12 +26,11 @@ const char CMD_POKE[] = "+POKE=";
 const char CMD_AMP[] = "+AMP=";
 const char CMD_AUDIO[] = "+AUDIO=";
 
-const char VERSION[] = "sa8x8-fw/" GIT_INFO "\r\n";
-const char MODEL[] = MODULE_MODEL "\r\n";
+const char VERSION[] = "sa8x8-fw/" GIT_INFO "" CRLF;
+const char MODEL[] = MODULE_MODEL "" CRLF;
 
-const char OK[] = "OK\r\n";
-const char ERR[] = "ERR\r\n";
-const char CRLF[] = "\r\n";
+const char OK[] = "OK" CRLF;
+const char ERR[] = "ERR" CRLF;
 
 struct ring rx;
 
@@ -183,14 +182,12 @@ int main(void) {
   char cmd[32];
   char *c;
 
-  // Transceiver status flags
-  bool sq;
-  bool css;
-  bool vox;
+  // Internal state
+  struct platform_state state = {0};
 
   while (1) {
-    // Update status flags
-    platform_refresh(&sq, &css, &vox);
+    // Update internal state
+    platform_refresh(&state);
 
     // Skip iteration if no incoming command
     if (ring_empty(&rx)) {
@@ -289,7 +286,7 @@ int main(void) {
       }
 
       // Apply any platform specific poke actions
-      if (!platform_poke(I2C_ADDR_XCVR, (uint8_t)reg, val)) {
+      if (!platform_poke((uint8_t)reg, val)) {
         uart_puts(ERR);
         continue;
       }
@@ -305,7 +302,7 @@ int main(void) {
       uint8_t i = sizeof(CMD_AMP) + 1;
 
       // Parse state
-      bool state = (bool) a2i(cmd, &i);
+      bool enabled = (bool) a2i(cmd, &i);
 
       // Error if missing terminator
       if (!(cmd[i] == '\0')) {
@@ -314,7 +311,7 @@ int main(void) {
       }
 
       // Set requested amplifier state
-      platform_amp_enable(state);
+      platform_amp(enabled);
 
       // Send command valid response
       uart_puts(OK);
@@ -327,7 +324,7 @@ int main(void) {
       uint8_t i = sizeof(CMD_AUDIO) + 1;
 
       // Parse state
-      bool state = (bool) a2i(cmd, &i);
+      bool enabled = (bool) a2i(cmd, &i);
 
       // Error if missing terminator
       if (!(cmd[i] == '\0')) {
@@ -336,7 +333,7 @@ int main(void) {
       }
 
       // Set requested amplifier state
-      platform_audio_enable(state);
+      platform_audio(enabled);
 
       // Send command valid response
       uart_puts(OK);
