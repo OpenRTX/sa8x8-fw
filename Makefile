@@ -88,11 +88,11 @@ src/sa8x8.o: $(VERSION_HEADER)
 $(TARGET).elf: $(VERSION_HEADER) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET).elf
 
-$(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
-
 $(TARGET).s37: $(TARGET).elf
 	$(OBJCOPY) -O srec --srec-forceS3 --srec-len 32 $(TARGET).elf $(TARGET).s37
+
+$(TARGET).bin: $(TARGET).s37
+	$(OBJCOPY) -O binary -I srec --gap-fill 0xff --pad-to 0x4000 $(TARGET).s37 $(TARGET).bin
 
 LOWER   = $(shell echo '$1' | tr '[:upper:]' '[:lower:]')
 
@@ -112,5 +112,4 @@ common: $(OUTPUTS)
 clean:
 	rm -f $(OBJECTS_RL78) $(VERSION_HEADER)
 	rm -f *.elf *.bin *.s37 *.map
-
 
