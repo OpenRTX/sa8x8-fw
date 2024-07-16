@@ -1,9 +1,5 @@
-PREFIX ?= rl78-elf-
-
-CC      = $(PREFIX)gcc
-AS      = $(PREFIX)as
-OBJCOPY = $(PREFIX)objcopy
-OBJDUMP = $(PREFIX)objdump
+PREFIX_RL78 ?= rl78-elf-
+PREFIX_M16C ?= m32c-elf-
 
 NAME    = sa8x8-fw
 
@@ -12,18 +8,36 @@ all: sa868s_vhf sa868s_350 sa868s_uhf
 
 .PHONY: sa868s_vhf
 sa868s_vhf: MODEL = SA868S-VHF
+sa868s_vhf: PREFIX = $(PREFIX_RL78)
 sa868s_vhf: rl78
 
 .PHONY: sa868s_350
 sa868s_350: MODEL = SA868S-350
+sa868s_350: PREFIX = $(PREFIX_RL78)
 sa868s_350: rl78
 
 .PHONY: sa868s_uhf
 sa868s_uhf: MODEL = SA868S-UHF
+sa868s_uhf: PREFIX = $(PREFIX_RL78)
 sa868s_uhf: rl78
 
+.PHONY: sa868_vhf
+sa868_vhf: MODEL = SA868-VHF
+sa868_vhf: PREFIX = $(PREFIX_M16C)
+sa868_vhf: m16c
+
+.PHONY: sa868_uhf
+sa868_uhf: MODEL = SA868-UHF
+sa868_uhf: PREFIX = $(PREFIX_M16C)
+sa868_uhf: m16c
+
+CC      = $(PREFIX)gcc
+AS      = $(PREFIX)as
+OBJCOPY = $(PREFIX)objcopy
+OBJDUMP = $(PREFIX)objdump
+
 CFLAGS_RL78  = \
-	  -Isrc -g -Os --param=min-pagesize=0 -mcpu=g13 \
+	  -Isrc -Os --param=min-pagesize=0 -mcpu=g13 \
 	  -ffunction-sections \
 	  -fdata-sections \
 	  -fdiagnostics-parseable-fixits \
@@ -41,6 +55,7 @@ LDFLAGS_RL78 = \
 	  -nostartfiles \
 	  -Wl,-z,noexecstack \
 	  -Wl,-e_PowerOnReset \
+	  -Wl,--print-memory-usage \
 	  -Wl,--gc-sections \
 	  -Wl,--cref \
 	  -Wl,-Map,$(TARGET).map \
@@ -53,6 +68,36 @@ OBJECTS_RL78 = \
 	src/r5f1026a/platform.o \
 	src/sa8x8.o
 
+CFLAGS_M16C  = \
+	  -Isrc -Os -mcpu=r8c \
+	  -ffunction-sections \
+	  -fdata-sections \
+	  -Wunused \
+	  -Wuninitialized \
+	  -Wall \
+	  -Wextra \
+	  -Wmissing-declarations \
+	  -Wconversion \
+	  -Wpointer-arith \
+	  -Wshadow \
+	  -Waggregate-return
+
+LDFLAGS_M16C = \
+	  -nostartfiles \
+	  -Wl,-z,noexecstack \
+	  -Wl,-e_start \
+	  -Wl,--print-memory-usage \
+	  -Wl,--cref \
+	  -Wl,-Map,$(TARGET).map \
+	  -T ./src/r5r0c002/r5r0c002.ld
+
+OBJECTS_M16C = \
+	src/r5r0c002/crt0.o \
+	src/r5r0c002/vectors.o \
+	src/r5r0c002/interrupts.o \
+	src/r5r0c002/platform.o \
+	src/sa8x8.o
+
 GIT_DIR ?= .git
 ifneq ($(and $(wildcard $(GIT_DIR)),$(shell which git)),)
 	GIT_INFO = $(shell git describe --long --tags --abbrev=7 | sed 's/\([^-]*-g\)/r\1/;s/-/./g')
@@ -60,10 +105,15 @@ else
 	GIT_INFO = "unknown"
 endif
 
-OUTPUTS = \
+OUTPUTS_RL78 = \
 	$(TARGET).elf \
 	$(TARGET).bin \
 	$(TARGET).s37
+
+OUTPUTS_M16C = \
+	$(TARGET).elf \
+	$(TARGET).bin \
+	$(TARGET).s28
 
 VERSION_HEADER = src/version.h
 
@@ -88,6 +138,12 @@ src/sa8x8.o: $(VERSION_HEADER)
 $(TARGET).elf: $(VERSION_HEADER) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET).elf
 
+$(TARGET).bin: $(TARGET).elf
+	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
+
+$(TARGET).s28: $(TARGET).elf
+	$(OBJCOPY) -O srec --srec-forceS3 --srec-len 24 $(TARGET).elf $(TARGET).s28
+
 $(TARGET).s37: $(TARGET).elf
 	$(OBJCOPY) -O srec --srec-forceS3 --srec-len 32 $(TARGET).elf $(TARGET).s37
 
@@ -101,15 +157,24 @@ rl78: TARGET   = $(NAME)-$(call LOWER,$(MODEL))
 rl78: OBJECTS  = $(OBJECTS_RL78)
 rl78: CFLAGS  += $(CFLAGS_RL78)
 rl78: LDFLAGS += $(LDFLAGS_RL78)
-rl78: $(OBJECTS_RL78)
 rl78: common
+rl78: $(OBJECTS_RL78)
+rl78: $(OUTPUTS_RL78)
+
+.PHONY: m16c
+m16c: TARGET   = $(NAME)-$(call LOWER,$(MODEL))
+m16c: OBJECTS  = $(OBJECTS_M16C)
+m16c: CFLAGS  += $(CFLAGS_M16C)
+m16c: LDFLAGS += $(LDFLAGS_M16C)
+m16c: common
+m16c: $(OBJECTS_M16C)
+m16c: $(OUTPUTS_M16C)
 
 .PHONY: common
 common: $(VERSION_HEADER)
-common: $(OUTPUTS)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS_RL78) $(VERSION_HEADER)
-	rm -f *.elf *.bin *.s37 *.map
+	rm -f $(OBJECTS_M16C) $(OBJECTS_RL78) $(VERSION_HEADER)
+	rm -f *.elf *.bin *.s28 *.s37 *.map
 
