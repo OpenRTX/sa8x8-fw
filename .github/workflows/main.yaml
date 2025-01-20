@@ -35,7 +35,7 @@ jobs:
           done
 
       - name: Upload
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sa8x8-fw-srecs
           path: |
