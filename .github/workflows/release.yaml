@@ -13,7 +13,7 @@ jobs:
   build:
     name: Generate firmware release
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
@@ -22,7 +22,7 @@ jobs:
       - name: Setup
         uses: eWaterCycle/setup-apptainer@v2
         with:
-          apptainer-version: 1.2.2
+          apptainer-version: 1.3.6
 
       - name: Compile
         run: |
