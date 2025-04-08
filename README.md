@@ -4,7 +4,7 @@
 
 This repository contains a replacement firmware application for the NiceRF SA8x8 family of radio modules.
 
-In contrast to the official factory firmware, two special commands (PEEK and POKE) enable direct register level control to a module's internal RDA1846S transceiver. Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible.
+In contrast to the official factory firmware, two special commands (PEEK and POKE) enable direct register level control to a module's internal AT1846S transceiver. Configuration of modules through this low level interface facilitates the use of advanced digital modes that are otherwise inaccessible. Refer to the included Python API example for a basic demonstration of using the firmware to transmit an [M17](https://m17project.org) baseband.
 
 **Note:** This firmware is not yet suitable as a drop-in replacement for the original firmware. Applications using the official factory firmware programming interface are not expected to function properly.
 
@@ -24,10 +24,13 @@ The following commands are available in this firmware:
 
 ## Supported Modules
 
- - [SA868S-V](https://a.aliexpress.com/_mNLKxyC) (<33 dBm @ VHF)
- - [SA868S-U](https://a.aliexpress.com/_mP5z5EG) (<33 dBm @ UHF)
+ - [SA818S-V](https://www.aliexpress.com/item/2251832038505495.html) (<30 dBm @ VHF)
+ - [SA818S-U](https://www.aliexpress.com/item/2251832038505495.html) (<30 dBm @ UHF)
+ - [SA818S-CE](https://www.aliexpress.com/item/3256806009764568.html) (<30 dBm @ UHF, CE-RED)
+ - [SA868S-V](https://www.aliexpress.com/item/2251832776489099.html) (<33 dBm @ VHF)
+ - [SA868S-U](https://www.aliexpress.com/item/2251832774928072.html) (<33 dBm @ UHF)
 
-**Note:** The open and standard editions are the same hardware. The open edition contains no functional firmware, as it is erased following factory quality assurance, and is intended for end-user reprogramming with firmware like this one.
+**Note:** The SA868S open and standard editions are the same hardware. The open edition contains no functional firmware, as it is erased following factory quality assurance, and is intended for end-user reprogramming with firmware like this one.
 
 ## Build Environment
 

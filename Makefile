@@ -4,7 +4,22 @@ PREFIX_M16C ?= m32c-elf-
 NAME    = sa8x8-fw
 
 .PHONY: all
-all: sa868s_vhf sa868s_350 sa868s_uhf
+all: sa818s_vhf sa818s_uhf sa868s_vhf sa868s_uhf
+
+.PHONY: sa818s_vhf
+sa818s_vhf: MODEL = SA818S-VHF
+sa818s_vhf: PREFIX = $(PREFIX_RL78)
+sa818s_vhf: rl78
+
+.PHONY: sa818s_350
+sa818s_350: MODEL = SA818S-350
+sa818s_350: PREFIX = $(PREFIX_RL78)
+sa818s_350: rl78
+
+.PHONY: sa818s_uhf
+sa818s_uhf: MODEL = SA818S-UHF
+sa818s_uhf: PREFIX = $(PREFIX_RL78)
+sa818s_uhf: rl78
 
 .PHONY: sa868s_vhf
 sa868s_vhf: MODEL = SA868S-VHF
@@ -137,9 +152,6 @@ src/sa8x8.o: $(VERSION_HEADER)
 
 $(TARGET).elf: $(VERSION_HEADER) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) -o $(TARGET).elf
-
-$(TARGET).bin: $(TARGET).elf
-	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
 
 $(TARGET).s28: $(TARGET).elf
 	$(OBJCOPY) -O srec --srec-forceS3 --srec-len 24 $(TARGET).elf $(TARGET).s28

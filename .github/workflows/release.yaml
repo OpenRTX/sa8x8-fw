@@ -7,7 +7,7 @@ on:
 
 env:
   SIF: https://github.com/OpenRTX/sa8x8-fw/releases/download/v1.0.0/rl78-elf-toolchain.sif
-  TARGETS: sa868s_vhf sa868s_350 sa868s_uhf
+  TARGETS: sa818s_vhf sa818s_uhf sa868s_vhf sa868s_uhf
 
 jobs:
   build:
