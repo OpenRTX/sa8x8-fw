@@ -1,6 +1,6 @@
 #!/usr/bin/env -S bash -x
 
-ctr=$(buildah from docker.io/library/alpine:3.18)
+ctr=$(buildah from docker.io/library/alpine:3.22)
 
 name=rl78-elf-toolchain
 user=toolbox
@@ -13,6 +13,9 @@ binutils_uri="https://ftp.gnu.org/gnu/binutils/binutils-${binutils_ver}.tar.gz"
 
 gcc_ver="13.1.0"
 gcc_uri="https://ftp.gnu.org/gnu/gcc/gcc-${gcc_ver}/gcc-${gcc_ver}.tar.gz"
+
+newlib_ver="4.5.0.20241231"
+newlib_uri="https://sourceware.org/pub/newlib/newlib-${newlib_ver}.tar.gz"
 
 gdb_ver="13.1"
 gdb_uri="https://sourceware.org/pub/gdb/releases/gdb-${gdb_ver}.tar.gz"
@@ -68,6 +71,13 @@ buildah run $ctr -- ../configure \
 	--disable-multilib \
 	--enable-lto \
 	--with-system-zlib
+buildah run $ctr -- make -j${njobs}
+buildah run $ctr -- make install
+
+buildah config --workingdir "${workdir}/newlib-${newlib_ver}/build" $ctr
+buildah run $ctr -- ../configure \
+        --target=${target} \
+        --prefix=${prefix}
 buildah run $ctr -- make -j${njobs}
 buildah run $ctr -- make install
 
