@@ -27,12 +27,16 @@ class AT1846S_FUNC(IntEnum):
     FUNC_TX  = 2
 
 
-class AT1846S:
-    def i2c_read():
-        raise NotImplemented("i2c_read not implemented")
+class SA8x8Error(Exception):
+    """Module replied ERR, gave an unexpected reply or did not reply."""
 
-    def i2c_write():
-        raise NotImplemented("i2c_write not implemented")
+
+class AT1846S:
+    def i2c_read(self, reg):
+        raise NotImplementedError("i2c_read not implemented")
+
+    def i2c_write(self, reg, val):
+        raise NotImplementedError("i2c_write not implemented")
 
     def initialize(self):
         self.i2c_write(0x30, 0x0001)   # Soft reset
@@ -213,7 +217,7 @@ class AT1846S:
         self.reload()
 
     def frequency(self, freq):
-        val = int((freq / 1000) * 16)
+        val = (int(freq) * 16) // 1000   # Units of 1/16 kHz, exact integer math
         fHi = (val >> 16) & 0xFFFF
         fLo = val & 0xFFFF
 
@@ -235,27 +239,55 @@ class SA8x8:
         self.xcvr.i2c_read  = lambda reg: self.peek(reg)
         self.xcvr.i2c_write = lambda reg, val: self.poke(reg, val)
 
+    def command(self, cmd):
+        """Send one AT command and return its reply line without CR/LF."""
+        self.ser.write(f'{cmd}\r\n'.encode('ascii'))
+        line = self.ser.readline()
+
+        # readline() returns a partial or empty line when the timeout expires
+        if not line.endswith(b'\n'):
+            raise SA8x8Error(f'{cmd}: no reply')
+
+        res = line.strip(b'\r\n').decode('ascii')
+        if res == 'ERR':
+            raise SA8x8Error(f'{cmd}: ERR')
+
+        return res
+
+    def expect_ok(self, cmd):
+        res = self.command(cmd)
+        if res != 'OK':
+            raise SA8x8Error(f'{cmd}: unexpected reply {res!r}')
+
     @property
     def version(self):
-        self.ser.write(b'AT+VERSION\r\n')
-        return self.ser.readline().strip(b'\r\n').decode('utf-8')
+        return self.command('AT+VERSION')
 
     def peek(self, reg):
-        msg = f'AT+PEEK={reg}\r\n'
-        self.ser.write(msg.encode('utf-8'))
-        val = int(self.ser.readline().strip(b'\r\n').decode('utf-8'))
-        return val
+        res = self.command(f'AT+PEEK={reg}')
+        try:
+            return int(res)
+        except ValueError:
+            raise SA8x8Error(f'AT+PEEK={reg}: unexpected reply {res!r}') from None
 
     def poke(self, reg, val):
-        msg = f'AT+POKE={reg},{val}\r\n'
-        self.ser.write(msg.encode('utf-8'))
-        res = self.ser.readline().strip(b'\r\n').decode('utf-8')
-        return True if res == b'OK' else False
+        self.expect_ok(f'AT+POKE={reg},{val}')
+        return True
+
+    def amp(self, enabled):
+        self.expect_ok(f'AT+AMP={int(bool(enabled))}')
+
+    def audio(self, enabled):
+        self.expect_ok(f'AT+AUDIO={int(bool(enabled))}')
+
+    def tot(self, seconds):
+        self.expect_ok(f'AT+TOT={int(seconds)}')
 
 
 def main():
     with serial.Serial() as ser:
         ser.baudrate = 9600
+        ser.timeout = 1   # Seconds; a lost reply raises instead of hanging
         ser.port = '/dev/ttyUSB0'
         ser.open()
 

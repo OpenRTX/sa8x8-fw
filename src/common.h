@@ -26,6 +26,8 @@
 #define TX (1U << 6)
 #define RX (1U << 5)
 
+#define TOT_DEFAULT 180U // Default transmit timeout in seconds, 0 disables
+
 /*
  * Bit-level access for uint8_t
  */
@@ -64,20 +66,28 @@ typedef struct {
 
 /*
  * A single ring buffer item
+ *
+ * The character is written by the UART receive interrupt and read by the
+ * main loop, so it is volatile to keep the compiler from caching it.
  */
 struct item {
-  char c;
+  volatile char c;
   struct item *next;
 };
 
 /*
  * A generic ring buffer structure
+ *
+ * The put and get pointers are shared between the UART receive interrupt
+ * (producer) and the main loop (consumer). They are volatile so that the
+ * main loop rereads them on every iteration, even if the compiler inlines
+ * the ring functions (for example with LTO).
  */
 struct ring {
   uint16_t size;
   struct item *buffer;
-  struct item *put;
-  struct item *get;
+  struct item *volatile put;
+  struct item *volatile get;
 };
 
 /*
@@ -106,7 +116,7 @@ extern struct ring rx;
 char up(char c);
 int eq(const char *s1, const char *s2, uint16_t len);
 const char *i2a(uint16_t n);
-uint16_t a2i(const char *s, uint8_t *pos);
+bool a2i(const char *s, uint8_t *pos, uint16_t *n);
 
 /*
  * Platform specific
@@ -119,26 +129,28 @@ bool platform_peek(uint8_t reg, uint16_t *val);
 bool platform_poke(uint8_t reg, uint16_t val);
 void platform_amp(bool enabled);
 void platform_audio(bool enabled);
+extern const bool PLATFORM_TURBO;
+bool platform_tot(uint16_t seconds);
 
 /*
  * UART peripheral control
  */
 void uart_init(void);
 int uart_puts(const char *s);
-int uart_gets(char *s, int size);
 
 /*
  * I2C peripheral control
  */
 void i2c_init(void);
-void i2c_write(uint8_t addr, uint8_t reg, uint16_t val);
-uint16_t i2c_read(uint8_t addr, uint8_t reg);
+bool i2c_write(uint8_t addr, uint8_t reg, uint16_t val);
+bool i2c_read(uint8_t addr, uint8_t reg, uint16_t *val);
 extern const uint8_t I2C_ADDR_XCVR;
 
 /*
  * Time management
  */
 void delay(uint16_t n);
+extern volatile uint16_t uptime;
 
 #endif
 

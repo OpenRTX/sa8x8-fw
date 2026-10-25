@@ -24,6 +24,25 @@
 const uint8_t I2C_ADDR_XCVR = 0xE2U;
 
 /*
+ * High speed UART mode (AT+TURBO) is supported
+ */
+const bool PLATFORM_TURBO = true;
+
+/*
+ * Seconds since boot, incremented by the TAU0 channel 0 interrupt
+ */
+volatile uint16_t uptime = 0;
+
+/*
+ * Transmit timeout state
+ */
+static uint16_t tot_limit = TOT_DEFAULT; // Timeout in seconds, 0 disables
+static bool tx_active = false;           // Transmitter currently keyed
+static uint16_t tx_start = 0;            // Uptime when transmitter was keyed
+
+static void _tot_check(void);
+
+/*
  * Successfully do nothing
  */
 void delay(uint16_t n) {
@@ -118,7 +137,7 @@ void uart_init(void) {
   PMC1_bit.no2 = 0; // P12 (TxD0) is digital I/O
 
   PM1_bit.no1 = 1;  // P11 (RxD0) is input
-  PMC1_bit.no1 = 0; // P12 (RxD0) is digital I/O
+  PMC1_bit.no1 = 0; // P11 (RxD0) is digital I/O
 
   SS0 |= 0x03U;     // Serial channel start operation
 
@@ -143,26 +162,6 @@ int uart_puts(const char *s) {
   }
 
   SMR00 &= ~0x0001U;
-
-  return len;
-}
-
-/*
- * Receive a string through UART0 via ring buffer
- */
-int uart_gets(char *s, int size) {
-  int len = 0;
-  char c;
-
-  while (len < size - 1) {
-    while (!ring_get(&rx, &c))
-      ;
-    if (c == '\r' || c == '\n') {
-      break;
-    }
-    s[len++] = c;
-  }
-  s[len] = '\0';
 
   return len;
 }
@@ -240,7 +239,7 @@ static inline void _i2c_stop() {
 /*
  * Low-level I2C bus write transaction
  */
-static void _i2c_write(uint8_t val) {
+static bool _i2c_write(uint8_t val) {
   _i2c_sdio_output();
 
   for (uint8_t i = 0; i < 8; i++) {
@@ -268,12 +267,17 @@ static void _i2c_write(uint8_t val) {
   _i2c_sclk_high();
   delay(2);
 
+  // Slave acknowledges by pulling SDIO low during the ninth clock
+  bool ack = !_i2c_sdio_value();
+
   _i2c_sclk_low();
   delay(1);
 
   _i2c_sdio_high();
   _i2c_sdio_output();
   delay(6);
+
+  return ack;
 }
 
 /*
@@ -335,32 +339,75 @@ void i2c_init(void) {
 /*
  * High-level I2C bus write transaction
  */
-void i2c_write(uint8_t addr, uint8_t reg, uint16_t val) {
+bool i2c_write(uint8_t addr, uint8_t reg, uint16_t val) {
   uint8_t hi = (uint8_t)((val >> 8) & 0xFF);
   uint8_t lo = val & 0xFF;
 
+  // Abort at the first byte the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr);
-  _i2c_write(reg);
-  _i2c_write(hi);
-  _i2c_write(lo);
+  bool ack = _i2c_write(addr) && _i2c_write(reg) && _i2c_write(hi) &&
+             _i2c_write(lo);
   _i2c_stop();
+
+  return ack;
 }
 
 /*
  * High-level I2C bus read transaction
  */
-uint16_t i2c_read(uint8_t addr, uint8_t reg) {
+bool i2c_read(uint8_t addr, uint8_t reg, uint16_t *val) {
+  // Address the register, abort if the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr);
-  _i2c_write(reg);
+  if (!(_i2c_write(addr) && _i2c_write(reg))) {
+    _i2c_stop();
+    return false;
+  }
+
+  // Repeated start in read mode, abort if the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr | 0x01);
+  if (!_i2c_write(addr | 0x01)) {
+    _i2c_stop();
+    return false;
+  }
+
   uint8_t hi = _i2c_read(true);
   uint8_t lo = _i2c_read(false);
   _i2c_stop();
 
-  return ((uint16_t)hi << 8) | lo;
+  *val = ((uint16_t)hi << 8) | lo;
+
+  return true;
+}
+
+/*
+ * Start a 1 Hz tick on timer array unit 0 channel 0
+ */
+static void timer_init(void) {
+  TAU0EN = 1;        // Release and enable clock to timer array unit 0
+  delay(1);          // Delay recommended by hardware manual
+
+  TPS0 = 0x000FU;    // Set operation clock:
+                     //* <03:00>PRS00=1111: CK00 is fCLK / 2**15 = 450 Hz
+
+  TT0 = 0x0001U;     // Stop timer channel 0
+
+  TMMK00 = 1U;       // Disable INTTM00 interrupt
+  TMIF00 = 0U;       // Clear INTTM00 interrupt flag
+  TMPR100 = 1U;      // Set INTTM00 lowest priority
+  TMPR000 = 1U;      // Set INTTM00 lowest priority
+
+  TMR00 = 0x0000U;   // Set operation mode:
+                     //* <15:14>CKS00=00: Operation clock CK00 set by TPS0
+                     //* <10:08>STS00=000: Software trigger start only
+                     //* <03:01>MD00=000: Interval timer mode
+                     //* <00>MD000=0: No interrupt when counting starts
+
+  TDR00 = 449U;      // 450 Hz / (449 + 1) = 1 Hz
+
+  TOE0 &= (uint16_t)~0x0001U; // No timer output on TO00
+
+  TMMK00 = 0U;       // Enable INTTM00 interrupt
+  TS0 = 0x0001U;     // Start timer channel 0
 }
 
 void platform_init(void) {
@@ -381,7 +428,7 @@ void platform_init(void) {
   P1_bit.no3 = 1;   // P13 (PDN) is high
   PM1_bit.no3 = 0;  // P13 (PDN) is output
 
-  PMC1_bit.no1 = 0; // P10 (RXEN) is digital I/O
+  PMC1_bit.no0 = 0; // P10 (RXEN) is digital I/O
   P1_bit.no0 = 0;   // P10 (RXEN) is low
   PM1_bit.no0 = 0;  // P10 (RXEN) is output
 
@@ -400,6 +447,8 @@ void platform_init(void) {
   PM2_bit.no3 = 1;  // P23  (GPIO6) is input: squelch indicator
                     // P137 (GPIO7) is input: vox indicator
 
+  timer_init();     // Start 1 Hz tick for the transmit timeout
+
   asm("ei");        // Enable interrupts
 }
 
@@ -408,8 +457,9 @@ void platform_sleep(void) {
 }
 
 void platform_turbo(void) {
-  while (SSR00L & 0x20U)
-    ; // Wait for any pending transmit data
+  while (SSR00L & 0x60U)
+    ; // Wait until the transmit buffer is empty (BFF00, bit 5) and the
+      // last character has finished shifting out (TSF00, bit 6)
 
   delay(1000);
 
@@ -437,16 +487,22 @@ void platform_refresh(struct platform_state *state) {
   bool ptt = !P2_bit.no2;
   uint16_t val;
 
+  // End the transmission if it has exceeded the timeout. A key held through
+  // the timeout must be released and pressed again before transmitting.
+  _tot_check();
+
   if (ptt && !state->ptt) {
     // Enable PTT if requested and not enabled previously
-    platform_peek(0x30, &val);
-    val = (val | TX) & ~RX;
-    platform_poke(0x30, val);
+    if (platform_peek(0x30, &val)) {
+      val = (val | TX) & ~RX;
+      platform_poke(0x30, val);
+    }
   } else if (!ptt && state->ptt) {
     // Disable PTT if requested and enabled previously
-    platform_peek(0x30, &val);
-    val = (val & ~TX) | RX;
-    platform_poke(0x30, val);
+    if (platform_peek(0x30, &val)) {
+      val = (val & ~TX) | RX;
+      platform_poke(0x30, val);
+    }
   }
 
   state->ptt = ptt;         // Push to talk from external GPIO
@@ -456,9 +512,7 @@ void platform_refresh(struct platform_state *state) {
 }
 
 bool platform_peek(uint8_t reg, uint16_t *val) {
-  *val = i2c_read(I2C_ADDR_XCVR, reg);
-
-  return true;
+  return i2c_read(I2C_ADDR_XCVR, reg, val);
 }
 
 bool platform_poke(uint8_t reg, uint16_t val) {
@@ -467,16 +521,30 @@ bool platform_poke(uint8_t reg, uint16_t val) {
     return false;
   }
 
-  // TX requested so disable RXEN
+  // TX requested so disable RXEN (LNA supply off)
   if (reg == 0x30 && (val & TX)) {
-    P1_bit.no0 = 1; // P10 (RXEN) is high
+    P1_bit.no0 = 0; // P10 (RXEN) is low
   }
 
-  i2c_write(I2C_ADDR_XCVR, reg, val);
+  if (!i2c_write(I2C_ADDR_XCVR, reg, val)) {
+    return false;
+  }
 
-  // RX requested so enable RXEN
+  // Track transmitter state for the transmit timeout
+  if (reg == 0x30) {
+    if (val & TX) {
+      if (!tx_active) {
+        tx_start = uptime; // Timeout counts from the moment TX is keyed
+      }
+      tx_active = true;
+    } else {
+      tx_active = false;
+    }
+  }
+
+  // RX requested so enable RXEN (LNA supply on)
   if (reg == 0x30 && (val & RX)) {
-    P1_bit.no0 = 0; // P10 (RXEN) is low
+    P1_bit.no0 = 1; // P10 (RXEN) is high
   }
 
   return true;
@@ -499,5 +567,33 @@ void platform_audio(bool enabled) {
   } else {
     // Disable external audio amplifier
     P2_bit.no0 = 1;   // P20 (SQ) is high
+  }
+}
+
+bool platform_tot(uint16_t seconds) {
+  tot_limit = seconds;
+
+  return true;
+}
+
+/*
+ * Return to receive if the transmitter has been keyed longer than the timeout
+ */
+static void _tot_check(void) {
+  uint16_t val;
+
+  if (!tx_active || tot_limit == 0) {
+    return;
+  }
+
+  // Unsigned subtraction stays correct across uptime wraparound
+  if ((uint16_t)(uptime - tx_start) < tot_limit) {
+    return;
+  }
+
+  // Retried on the next call if the transceiver does not respond
+  if (platform_peek(0x30, &val)) {
+    val = (val & ~TX) | RX;
+    platform_poke(0x30, val);
   }
 }

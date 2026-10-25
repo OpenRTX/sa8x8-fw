@@ -36,7 +36,10 @@ void INT_SRE0(void) {}
 void INT_TM01H(void) {}
 void INT_TM03H(void) {}
 void INT_IICA0(void) {}
-void INT_TM00(void) {}
+void INT_TM00(void) {
+  uptime++;
+  TMIF00 = 0U;
+}
 void INT_TM01(void) {}
 void INT_TM02(void) {}
 void INT_TM03(void) {}

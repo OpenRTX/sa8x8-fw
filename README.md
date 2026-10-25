@@ -21,6 +21,7 @@ The following commands are available in this firmware:
 | AT+POKE=_REG_,_VAL_ | Set transceiver register contents    |
 | AT+AMP=_0_/_1_      | Set power amplifier state            |
 | AT+AUDIO=_0_/_1_    | Set external audio amplifier state   |
+| AT+TOT=_SEC_        | Set transmit timeout, 0 disables     |
 
 ## Supported Modules
 

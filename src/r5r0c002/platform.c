@@ -24,6 +24,11 @@
 const uint8_t I2C_ADDR_XCVR = 0xE2U;
 
 /*
+ * High speed UART mode (AT+TURBO) is not implemented
+ */
+const bool PLATFORM_TURBO = false;
+
+/*
  * Successfully do nothing
  */
 void delay(uint16_t n) {
@@ -59,26 +64,6 @@ int uart_puts(const char *s) {
     u0tbl = (unsigned char)*s++;
     ++len;
   }
-
-  return len;
-}
-
-/*
- * Receive a string through UART0 via ring buffer
- */
-int uart_gets(char *s, int size) {
-  int len = 0;
-  char c;
-
-  while (len < size - 1) {
-    while (!ring_get(&rx, &c))
-      ;
-    if (c == '\r' || c == '\n') {
-      break;
-    }
-    s[len++] = c;
-  }
-  s[len] = '\0';
 
   return len;
 }
@@ -156,7 +141,7 @@ static inline void _i2c_stop() {
 /*
  * Low-level I2C bus write transaction
  */
-static void _i2c_write(uint8_t val) {
+static bool _i2c_write(uint8_t val) {
   _i2c_sdio_output();
 
   for (uint8_t i = 0; i < 8; i++) {
@@ -184,12 +169,17 @@ static void _i2c_write(uint8_t val) {
   _i2c_sclk_high();
   delay(2);
 
+  // Slave acknowledges by pulling SDIO low during the ninth clock
+  bool ack = !_i2c_sdio_value();
+
   _i2c_sclk_low();
   delay(1);
 
   _i2c_sdio_high();
   _i2c_sdio_output();
   delay(6);
+
+  return ack;
 }
 
 /*
@@ -244,32 +234,44 @@ void i2c_init(void) {
 /*
  * High-level I2C bus write transaction
  */
-void i2c_write(uint8_t addr, uint8_t reg, uint16_t val) {
+bool i2c_write(uint8_t addr, uint8_t reg, uint16_t val) {
   uint8_t hi = (uint8_t)((val >> 8) & 0xFF);
   uint8_t lo = val & 0xFF;
 
+  // Abort at the first byte the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr);
-  _i2c_write(reg);
-  _i2c_write(hi);
-  _i2c_write(lo);
+  bool ack = _i2c_write(addr) && _i2c_write(reg) && _i2c_write(hi) &&
+             _i2c_write(lo);
   _i2c_stop();
+
+  return ack;
 }
 
 /*
  * High-level I2C bus read transaction
  */
-uint16_t i2c_read(uint8_t addr, uint8_t reg) {
+bool i2c_read(uint8_t addr, uint8_t reg, uint16_t *val) {
+  // Address the register, abort if the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr);
-  _i2c_write(reg);
+  if (!(_i2c_write(addr) && _i2c_write(reg))) {
+    _i2c_stop();
+    return false;
+  }
+
+  // Repeated start in read mode, abort if the slave does not acknowledge
   _i2c_start();
-  _i2c_write(addr | 0x01);
+  if (!_i2c_write(addr | 0x01)) {
+    _i2c_stop();
+    return false;
+  }
+
   uint8_t hi = _i2c_read(true);
   uint8_t lo = _i2c_read(false);
   _i2c_stop();
 
-  return ((uint16_t)hi << 8) | lo;
+  *val = ((uint16_t)hi << 8) | lo;
+
+  return true;
 }
 
 void platform_init(void) {
@@ -325,14 +327,16 @@ void platform_refresh(struct platform_state *state) {
 
   if (ptt && !state->ptt) {
     // Enable PTT if requested and not enabled previously
-    platform_peek(0x30, &val);
-    val = (val | TX) & ~RX;
-    platform_poke(0x30, val);
+    if (platform_peek(0x30, &val)) {
+      val = (val | TX) & ~RX;
+      platform_poke(0x30, val);
+    }
   } else if (!ptt && state->ptt) {
     // Disable PTT if requested and enabled previously
-    platform_peek(0x30, &val);
-    val = (val & ~TX) | RX;
-    platform_poke(0x30, val);
+    if (platform_peek(0x30, &val)) {
+      val = (val & ~TX) | RX;
+      platform_poke(0x30, val);
+    }
   }
 
   state->ptt = ptt;  // Push to talk from external GPIO
@@ -342,9 +346,7 @@ void platform_refresh(struct platform_state *state) {
 }
 
 bool platform_peek(uint8_t reg, uint16_t *val) {
-  *val = i2c_read(I2C_ADDR_XCVR, reg);
-
-  return true;
+  return i2c_read(I2C_ADDR_XCVR, reg, val);
 }
 
 bool platform_poke(uint8_t reg, uint16_t val) {
@@ -358,7 +360,9 @@ bool platform_poke(uint8_t reg, uint16_t val) {
     p3_7 = 1; // P3_7 (RXEN) is high
   }
 
-  i2c_write(I2C_ADDR_XCVR, reg, val);
+  if (!i2c_write(I2C_ADDR_XCVR, reg, val)) {
+    return false;
+  }
 
   // RX requested so enable RXEN
   if (reg == 0x30 && (val & RX)) {
@@ -386,4 +390,11 @@ void platform_audio(bool enabled) {
     // Disable external audio amplifier
     p1_0 = 1; // P1_0 (SQ) is high
   }
+}
+
+bool platform_tot(uint16_t seconds) {
+  // Not implemented
+  (void)seconds;
+
+  return false;
 }
